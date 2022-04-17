@@ -9,13 +9,16 @@ import style from "../../assets/global-style";
 import {connect} from "react-redux";
 import {getAlbumList, changeEnterLoading} from "./store/actionCreators";
 import Loading from "../../baseUI/loading/index";
+import SongsList from "../SongsList";
+import MusicNote from "../../baseUI/music-note/index";
 
 function Album(props){
     const [showStatus, setShowStatus] = useState(true);
     const [title, setTitle] = useState("歌单");
     const [isMarquee, setIsMarquee] = useState(false);
     const headerEl = useRef();
-    const {currentAlbum: currentAlbumImmutable, enterLoading, getAlbumDataDispatch} = props;
+    const musicNoteRef = useRef();
+    const {currentAlbum: currentAlbumImmutable, enterLoading, getAlbumDataDispatch, songsCount} = props;
     const id = props.match.params.id;
 
     useEffect(() => {
@@ -44,6 +47,10 @@ function Album(props){
             setIsMarquee(false);
         }
     }, [currentAlbum]);
+
+    const musicAnimation = (x, y) => {
+        musicNoteRef.current.startAnimation({x, y});
+    }
 
     const renderTopDesc = () => {
         return (
@@ -151,11 +158,11 @@ function Album(props){
         <CSSTransition
             in={showStatus}
             timeout={300}
-            className="fly"
+            classNames="fly"
             appear={true}
             unmountOnExit
             onExited={props.history.goBack}>
-                <Container>
+                <Container play={songsCount}>
                     <Header ref={headerEl} title={title} handleClick={handleBack} isMarquee={isMarquee}></Header>
                     {
                         !isEmptyObject(currentAlbum) ? (
@@ -164,7 +171,11 @@ function Album(props){
                                 <div>
                                     {renderTopDesc()}
                                     {renderMenu()}
-                                    {renderSongList()}
+                                    <SongsList songs={currentAlbum.tracks}
+                                        collectCount={currentAlbum.subscribedCount}
+                                        showCollect={true}
+                                        showBackground={true}
+                                        musicAnimation={musicAnimation}></SongsList>
                                 </div>
                             </Scroll>
                         ) : null
@@ -172,6 +183,7 @@ function Album(props){
                     {
                         enterLoading ? <Loading/> : null
                     }
+                    <MusicNote ref={musicNoteRef}></MusicNote>
                 </Container>
             </CSSTransition>
     )
@@ -179,7 +191,8 @@ function Album(props){
 
 const mapStateToProps = (state) => ({
     currentAlbum: state.getIn(['album', 'currentAlbum']),
-    enterLoading: state.getIn(['album', 'enterLoading'])
+    enterLoading: state.getIn(['album', 'enterLoading']),
+    songsCount: state.getIn(["player", 'playList']).size
 })
 
 const mapDispatchToProps = (dispatch) => {

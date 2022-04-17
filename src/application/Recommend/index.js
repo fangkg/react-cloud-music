@@ -11,7 +11,7 @@ import {renderRoutes} from "react-router-config";
 
 
 function Recommend(props){
-    const {bannerList, recommendList, enterLoading} = props;
+    const {bannerList, recommendList, enterLoading, songsCount} = props;
     const {getBannerDataDispatch, getRecommendListDataDispatch} = props;
 
     useEffect(() => {
@@ -28,7 +28,7 @@ function Recommend(props){
 
 
     return (
-        <Content>
+        <Content play={songsCount}>
             <Scroll onScroll={forceCheck}>
                 <div>
                     <Slider bannerList={bannerListJS}></Slider>
@@ -49,7 +49,8 @@ function Recommend(props){
 const mapStateToProps = (state) => ({
     bannerList: state.getIn(['recommend', 'bannerList']),
     recommendList: state.getIn(['recommend', 'recommendList']),
-    enterLoading: state.getIn(['recommend', 'enterLoading'])
+    enterLoading: state.getIn(['recommend', 'enterLoading']),
+    songsCount: state.getIn(["player", "playList"]).size
 });
 
 // 映射dispatch到props上

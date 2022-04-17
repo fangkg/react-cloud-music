@@ -50,3 +50,66 @@ export const getName = list => {
 }
 
 export const isEmptyObject = obj => !obj || Object.keys(obj).length === 0;
+
+export const formatPlayTime = interval => {
+    interval = interval | 0;
+    const minute = (interval / 60) | 0;
+    const second = (interval % 60).toString().padStart(2, "0");
+    return `${minute}:${second}`;
+};
+
+let elementStyle = document.createElement("div").style;
+
+let vendor = (() => {
+    let transformNames = {
+        webkit: "webkitTransform",
+        Moz: "MozTransform",
+        O: "OTransform",
+        ms: "msTransform",
+        standard: "Transform"
+    }
+    for(let key in transformNames) {
+        if(elementStyle[transformNames[key]] !== undefined) {
+            return key;
+        }
+    }
+    return false;
+})();
+
+export function prefixStyle(style) {
+    if(vendor === false) {
+        return false;
+    }
+    if(vendor === "standard") {
+        return style;
+    }
+    return vendor + style.charAr(0).toUpperCase() + style.substr(1);
+};
+
+export const getSongUrl = id => {
+    return `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+export function shuffle(arr) {
+    let new_arr = [];
+    arr.forEach(item => {
+        new_arr.push(item);
+    });
+    for(let i = 0; i < new_arr.length; i++) {
+        let j = getRandomInt(0, i);
+        let t = new_arr[j];
+        new_arr[i] = new_arr[j];
+        new_arr[j] = t;
+    }
+    return new_arr;
+}
+
+export const findIndex = (song, list) => {
+    return list.filterIndex(item => {
+        return song.id === item.id;
+    })
+}

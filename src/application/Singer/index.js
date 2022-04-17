@@ -9,6 +9,7 @@ import SongsList from "../SongsList";
 import {connect} from "react-redux";
 import Loading from "./../../baseUI/loading/index";
 import {getSingerInfo, changeEnterLoading} from "./store/actionCreators";
+import MusicNote from "../../baseUI/music-note";
 
 function Singer(props) {
     const initialHeight = useRef(0);
@@ -16,7 +17,8 @@ function Singer(props) {
     const {
         artist: immutableArtist,
         songs: immutableSongs,
-        loading
+        loading,
+        songsCount
     } = props;
     const {getSingerDataDispatch} = props;
     const artist = immutableArtist.toJS();
@@ -27,6 +29,7 @@ function Singer(props) {
     const songScroll = useRef();
     const header = useRef();
     const layer = useRef();
+    const musicNoteRef = useRef();
     const OFFSET = 5;
 
     useEffect(() => {
@@ -75,16 +78,20 @@ function Singer(props) {
         setShowStatus(false);
     }, []);
 
+    const musicAnimation = (x, y) => {
+        musicNoteRef.current.startAnimation({x, y});
+    }
+
     return (
         <CSSTransition
             in={showStatus}
             timeout={300}
-            className="fly"
+            classNames="fly"
             appear={true}
             unmountOnExit
             onExited={() => props.history.goBack()}
         >
-            <Container>
+            <Container play={songsCount}>
                <Header handleClick={setShowStatusFalse} title={artist.name} ref={header}></Header>
                 <ImgWrapper ref={imageWrapper} bgUrl={artist.picUrl}>
                     <div className="filter"></div>
@@ -96,12 +103,13 @@ function Singer(props) {
                 <BgLayer ref={layer}></BgLayer>
                 <SongListWrapper ref={songScrollWrapper}>
                     <Scroll ref={songScroll} onScroll={handleScroll}>
-                        <SongsList songs={songs} showCollect={false}></SongsList>
+                        <SongsList songs={songs} showCollect={false} musicAnimation={musicAnimation}></SongsList>
                     </Scroll>
                 </SongListWrapper>
                 {
                     loading ? <Loading/> : null
                 }
+                <MusicNote ref={musicNoteRef}></MusicNote>
             </Container>
         </CSSTransition>
     )
@@ -110,7 +118,8 @@ function Singer(props) {
 const mapStateToProps = state => ({
     artist: state.getIn(["singerInfo", "artist"]),
     songs: state.getIn(["singerInfo", "songsOfArtist"]),
-    loading: state.getIn(["singerInfo", "loading"])
+    loading: state.getIn(["singerInfo", "loading"]),
+    songsCount: state.getIn(["player", "playList"]).size
 });
 
 const mapDispatchToProps = dispatch => {
