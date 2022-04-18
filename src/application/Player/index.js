@@ -6,16 +6,22 @@ import NormalPlayer from "./normalPlayer";
 import {getSongUrl, isEmptyObject, shuffle, findIndex} from "../../api/utils";
 import {playMode} from "../../api/config";
 import Toast from "./../../baseUR/toast/index";
+import PlayList from "./play-list/index";
+import {getLyricRequest} from "../../api/request";
+import Lyric from "./../../api/lyric-parser";
 
 function Player(props) {
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [currentPlayingLyric, setPlayingLyric] = useState("");
     let percent = isNaN(currentTime / duration) ? 0 : currentTime / duration;
     const [preSong, setPreSong] = useState({});
     const [modeText, setModeText] = useState("");
     const [songReady, setSongReady] = useState(true);
     const audioRef = useRef();
     const toastRef = useRef();
+    const currentLyric = useRef();
+    const currentLineNum = useRef(0);
     const {playing, currentSong: immutableCurrentSong, currentIndex, playList: immutablePlayList, mode, sequencePlayList: immutableSequencePlayList, fullScreen} = props;
     const {togglePlayingDispatch, changeCurrentIndexDispatch, changeCurrentDispatch, changePlayListDispatch, changeModeDispatch, toggleFullScreenDispatch} = props;
     const playList = immutablePlayList.toJS();
@@ -35,6 +41,7 @@ function Player(props) {
             })
         });
         togglePlayingDispatch(true);
+        getLyric(current.id);
         setCurrentTime(0);
         setDuration((current.dt / 1000) | 0)
     }, [playList, currentIndex]);
@@ -116,6 +123,33 @@ function Player(props) {
         } else {
             handleEnd();
         }
+    }
+
+    const handleLyric = ({lineNum, txt}) => {
+        if(!currentLyric.current) return;
+        currentLineNum.current = lineNum;
+        setPlayingLyric(txt);
+    }
+
+    const getLyric = id => {
+        let lyric = "";
+        if(currentLyric.current) {
+            currentLyric.current.stop();
+        }
+        getLyricRequest(id).then(data => {
+            lyric = data.lrc.lyric;
+            if(!lyric) {
+                currentLyric.current = null;
+                return;
+            }
+            currentLyric.current = new Lyric(lyric, handleLyric);
+            currentLyric.current.play();
+            currentLineNum.current = 0;
+            currentLyric.current.seek(0);
+        }).catch(() => {
+            songReady.current = true;
+            audioRef.current.play();
+        })
     }
 
     return (
